@@ -162,30 +162,97 @@ Pour des raisons inconnus, je n'arrive plus à charger mon module, même après 
 
 **1. Commencez par écrire un script qui recopie dans un fichier tmp.txt chaque ligne saisie au clavier par l’utilisateur**
 
+```
+#!/bin/bash
+while :
+do
+read keyboard_input
+echo $keyboard_input >> tmp.txt
+done
+```
+
 **2. Lancez votre script et appuyez sur CTRL+Z. Que se passe-t-il ? Comment faire pour que le script poursuive son exécution ?**
+
+Le raccourcis permet de mettre en pause un script en cours d'exécution. Il est cependant possible de résumer l'exécution du script avec ```fg k```
 
 **3. Toujours pendant l’exécution du script, appuyez sur CTRL+C. Que se passe-t-il ?**
 
+Le raccourcis CTRL+C permet de stopper complètement l'exécution d'un script.
+
 **4. Modifiez votre script pour redéfinir les actions à effectuer quand le script reçoit les signaux SIGTSTP (= CTRL+Z) et SIGINT (= CTRL+C) : dans le premier cas, il doit afficher ”Impossible de me placer en arrière-plan”, et dans le second cas, il doit afficher ”OK, je fais un peu de ménage avant” avant de supprimer le fichier temporaire et terminer le script.**
+
+```
+#!/bin/bash
+while :
+do
+read keyboard_input
+trap 'echo impossible de me placer en arrière-plan !' TSTP
+trap 'echo OK, je fais juste un peu de ménage avant ; exit' INT
+trap 'rm tmp.txt' EXIT
+echo $keyboard_input >> tmp.txt
+done
+```
 
 **5. Testez le nouveau comportement de votre script en utilisant d’une part les raccourcis clavier, d’autre part la commande kill**
 
+La commande kill et les raccourcis trigger tout les deux les évènements programmé dans le script.
+
 **6. Relancez votre script et faites immédiatement un CTRL+C : vous obtenez un message d’erreur vous indiquant que le fichier tmp.txt n’existe pas. A l’aide de la commande interne test, corrigez votre script pour que ce message n’apparaisse plus.**
+
+```
+#!/bin/bash
+while :
+do
+read keyboard_input
+if [ ! -f FILENAME ]
+then
+touch tmp.txt
+fi
+
+trap 'echo impossible de me placer en arrière-plan !' TSTP
+trap 'echo OK, je fais juste un peu de ménage avant ; exit' INT
+trap 'rm tmp.txt' EXIT
+echo $keyboard_input >> tmp.txt
+done
+```
 
 ## Exercice 4. Surveillance de l’activité du système
 
 **1. Dans tty1, lancez la commande htop, puis tapez la commande w dans tty2. Qu’affiche cette commande ?**
 
+La commande affiche la liste des utilisateurs connectés avec d'autres informations supplémentaires, tel qu'une IP associés et les processus démarrer par l'utilisateur.
+
 **2. Comment afficher l’historique des dernières connexions à la machine ?**
+
+Il est possible d'accéder à l'historique des connexion à la machine via la commande `last`
 
 **3. Quelle commande permet d’obtenir la version du noyau ?**
 
+Il est possible d'obtenir la version actuel du noyaux via la commande `uname -r`
+
 **4. Comment récupérer toutes les informations sur le processeur, au format JSON ?**
+
+Les informations du processeur sont accessible via la commande `lshw -class processor`. Ont peut définir le format json en rajoutant l'argument `-json` à la fin.
 
 **5. Comment obtenir la liste des derniers démarrages de la machine avec la commande journalctl ? Comment afficher tout ce qu’il s’est passé sur la machine lors de l’avant-dernier boot ?**
 
+la commande journalctl peut afficher les logs des démarrages de la machine via la commande:
+```
+journalctl --list-boots
+```
+
+Il est possible de spécifié un numéro de boot, par exemple la commande suivante sélectionne l'avant-dernier boot:
+```
+journalctl -b -1
+```
+
 **6. Comment obtenir la liste des derniers démarrages de la machine avec la commande journalctl ?**
 
+Il est possible d'obtenir la liste des derniers démarrages via la commande:
+```journalctl --list-boots```
+
 **7. Faites en sortes que lors d’une connexion à la machine, les utilisateurs soient prévenus par un message à l’écran d’une maintenance le 26 mars à minuit.**
+
+Il est possible de définir le "message of the day" dans le fichier `/etc/motd`. J'ai donc écris le message dans ce fichier.
 
 **8. Ecrivez un script bash qui permet de calculer le k-ième nombre de Fibonacci : Fk = Fk−1 + Fk−2, avec F0 = F1 = 1. Lancez le calcul de F100 puis lancez la commande tload depuis un autre terminal virtuel. Que constatez-vous ? Interrompez ensuite le calcul avec CTRL+C et observez la conséquence sur l’affichage de tload.**
