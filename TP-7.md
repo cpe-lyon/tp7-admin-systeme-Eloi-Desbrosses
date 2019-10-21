@@ -3,22 +3,62 @@
 ## Exercice 1. Personnalisation de GRUB
 
 **1. Commencez par changer l’extension du fichier /etc/default/grub.d/50-curtin-settings.cfg s’il est présent dans votre environnement (vous pouvez aussi commenter son contenu).**
+```
+serveur@serveur:/etc/default/grub.d$ sudo mv 50-curtin-settings.cfg 50-curtin-settings.cfg.back
+```
 
 **2. Modifiez le fichier /etc/default/grub pour que le menu de GRUB s’affiche pendant 10 secondes ; passé ce délai, le premier OS du menu doit être lancé automatiquement.**
 
+```
+GRUB_TIMEOUT=10
+```
+
 **3. Lancez la commande update-grub**
+
+```
+serveur@serveur:/etc/default$ sudo update-grub
+Sourcing file `/etc/default/grub'
+Sourcing file `/etc/default/grub.d/init-select.cfg'
+Generating grub configuration file ...
+Found linux image: /boot/vmlinuz-5.0.0-31-generic
+Found initrd image: /boot/initrd.img-5.0.0-31-generic
+Found linux image: /boot/vmlinuz-5.0.0-29-generic
+Found initrd image: /boot/initrd.img-5.0.0-29-generic
+Found linux image: /boot/vmlinuz-5.0.0-27-generic
+Found initrd image: /boot/initrd.img-5.0.0-27-generic
+done
+```
 
 **4. Redémarrez votre VM pour valider que les changements ont bien été pris en compte**
 
+Les changements ont bien été pris en compte.
+
 **5. On va augmenter la résolution de GRUB et de notre VM. Cherchez sur Internet le ou les paramètres à rajouter au fichier grub.**
+
+```
+# The resolution used on graphical terminal
+# note that you can use only modes which your graphic card supports via VBE
+# you can see them in real GRUB with the command `vbeinfo'
+GRUB_GFXMODE=1280x800 
+```
 
 **6. On va à présent ajouter un fond d’écran. Il existe un paquet en proposant quelques uns : grub2-splash-images (après installation, celles-ci sont disponibles dans /usr/share/images/grub).**
 
+```
+root@serveur:/etc/default# apt-get install grub2-spashimages
+```
+
 **7. Il est également possible de configurer des thèmes. On en trouve quelques uns dans les dépôts (grub2-themes-*). Installez-en un.**
+
+```
+root@serveur:/etc/default# apt-get install grub2-themes-ubuntu-mate
+```
 
 **8. Ajoutez une entrée permettant d’arrêter la machine, et une autre permettant de la redémarrer.**
 
 **9. Configurer GRUB pour que le clavier soit en français**
+
+J'ai cassé ma machine.. Grub boot à l'infinis. Pour la réparer il faut que je lance une image en mode rescue, mais la syntax que j'ai trouvé sur internet ne fonctionne pas. à voir.
 
 ## Exercice 2. Noyau
 
@@ -66,13 +106,57 @@ cp ./hello.ko /lib/modules/$(shell uname -r)/kernel/drivers/misc
 
 **4. Compilez le module à l’aide de la commande make, puis installez-le à l’aide de la commande make install.**
 
+```
+root@serveur:~# make
+make -C /lib/modules/5.0.0-29-generic/build M=/root modules
+make[1]: Entering directory '/usr/src/linux-headers-5.0.0-29-generic'
+  CC [M]  /root/hello.o
+  Building modules, stage 2.
+  MODPOST 1 modules
+  CC      /root/hello.mod.o
+  LD [M]  /root/hello.ko
+make[1]: Leaving directory '/usr/src/linux-headers-5.0.0-29-generic'
+root@serveur:~# make install
+cp ./hello.ko /lib/modules/5.0.0-29-generic/kernel/drivers/misc
+```
+
 **5. Chargez le module ; vérifiez dans le journal du noyau que le message ”La fonction init_module() est appelée” a bien été inscrit, synonyme que le module a été chargé ; confirmez avec la commande lsmod.**
+
+```
+root@serveur:/lib/modules/5.0.0-29-generic/kernel/drivers/misc# journalctl | grep "init_module"
+oct. 21 09:24:52 serveur kernel: [Hello world] - La fonction init_module() est appelée.
+root@serveur:/lib/modules/5.0.0-29-generic/kernel/drivers/misc# lsmod
+Module                  Size  Used by
+hello                  16384  0
+```
 
 **6. Utilisez la commande modinfo pour obtenir des informations sur le module hello.ko ; vous devriez notamment voir les informations figurant dans le fichier C.**
 
+```
+root@serveur:/lib/modules/5.0.0-29-generic/kernel/drivers/misc# modinfo hello.ko
+filename:       /lib/modules/5.0.0-29-generic/kernel/drivers/misc/hello.ko
+version:        Version 1.00
+description:    Module hello world
+author:         John Doe
+license:        GPL
+srcversion:     4398A2271F215E3A6F58078
+depends:
+retpoline:      Y
+name:           hello
+vermagic:       5.0.0-29-generic SMP mod_unload
+```
+
 **7. Déchargez le module ; vérifiez dans le journal du noyau que le message ”La fonction cleanup_module() est appelée” a bien été inscrit, synonyme que le module a été déchargé ; confirmez avec la commande lsmod.**
 
+```
+root@serveur:/lib/modules/5.0.0-29-generic/kernel/drivers/misc# rmmod hello
+root@serveur:/lib/modules/5.0.0-29-generic/kernel/drivers/misc# journalctl | grep "cleanup_module"
+oct. 21 09:31:18 serveur kernel: [Hello world] - La fonction cleanup_module() est appelée.
+```
+
 **8. Pour que le module soit chargé automatiquement au démarrage du système, il faut l’inscrire dans le fichier /etc/modules. Essayez, et vérifiez avec la commande lsmod après redémarrage de la machine.**
+
+Pour des raisons inconnus, je n'arrive plus à charger mon module, même après la recompilation.
 
 ## Exercice 3. Interception de signaux
 
